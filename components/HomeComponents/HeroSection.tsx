@@ -68,7 +68,7 @@ export function HeroSection() {
             variant="outline"
             className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-6 text-lg rounded-full transition-all duration-300 bg-transparent"
           >
-            <Link href="#about">Learn More</Link>
+            <Link href="#about">Learn More </Link>
           </Button>
         </div>
 
