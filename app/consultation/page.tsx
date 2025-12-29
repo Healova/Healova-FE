@@ -1,65 +1,75 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Upload, CheckCircle2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Upload, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-type Step = 1 | 2 | 3 | 4
+type Step = 1 | 2 | 3 | 4;
 
 export default function ConsultationPage() {
-  const router = useRouter()
-  const [step, setStep] = useState<Step>(1)
-  const [submitted, setSubmitted] = useState(false)
+  const router = useRouter();
+  const [step, setStep] = useState<Step>(1);
+  const [submitted, setSubmitted] = useState(false);
 
   // Form state
-  const [age, setAge] = useState("")
-  const [height, setHeight] = useState("")
-  const [weight, setWeight] = useState("")
-  const [menstrualCycle, setMenstrualCycle] = useState<"regular" | "irregular" | "very-irregular">("regular")
+  const [age, setAge] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const [menstrualCycle, setMenstrualCycle] = useState<
+    "regular" | "irregular" | "very-irregular"
+  >("regular");
 
   // Symptoms
-  const [irregularPeriods, setIrregularPeriods] = useState(false)
-  const [acne, setAcne] = useState(false)
-  const [weightGain, setWeightGain] = useState(false)
-  const [hairLoss, setHairLoss] = useState(false)
-  const [facialHair, setFacialHair] = useState(false)
-  const [moodChanges, setMoodChanges] = useState(false)
-  const [fatigue, setFatigue] = useState(false)
-  const [otherSymptoms, setOtherSymptoms] = useState("")
+  const [irregularPeriods, setIrregularPeriods] = useState(false);
+  const [acne, setAcne] = useState(false);
+  const [weightGain, setWeightGain] = useState(false);
+  const [hairLoss, setHairLoss] = useState(false);
+  const [facialHair, setFacialHair] = useState(false);
+  const [moodChanges, setMoodChanges] = useState(false);
+  const [fatigue, setFatigue] = useState(false);
+  const [otherSymptoms, setOtherSymptoms] = useState("");
 
   // Medical History
-  const [diagnosis, setDiagnosis] = useState<"pcod" | "pcos" | "not-diagnosed">("not-diagnosed")
-  const [medications, setMedications] = useState("")
-  const [reportsAvailable, setReportsAvailable] = useState<"yes" | "no">("no")
+  const [diagnosis, setDiagnosis] = useState<"pcod" | "pcos" | "not-diagnosed">(
+    "not-diagnosed"
+  );
+  const [medications, setMedications] = useState("");
+  const [reportsAvailable, setReportsAvailable] = useState<"yes" | "no">("no");
 
   // Media uploads (simulated)
-  const [uploadedImages, setUploadedImages] = useState<string[]>([])
-  const [uploadedAudio, setUploadedAudio] = useState<string[]>([])
-  const [uploadedVideo, setUploadedVideo] = useState<string[]>([])
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedAudio, setUploadedAudio] = useState<string[]>([]);
+  const [uploadedVideo, setUploadedVideo] = useState<string[]>([]);
 
-  const progress = (step / 4) * 100
+  const progress = (step / 4) * 100;
 
   const handleNext = () => {
     if (step < 4) {
-      setStep((step + 1) as Step)
+      setStep((step + 1) as Step);
     }
-  }
+  };
 
   const handleBack = () => {
     if (step > 1) {
-      setStep((step - 1) as Step)
+      setStep((step - 1) as Step);
     }
-  }
+  };
 
   const handleSubmit = () => {
     // In a real app, this would submit to an API
@@ -76,22 +86,28 @@ export default function ConsultationPage() {
         other: otherSymptoms,
       },
       medicalHistory: { diagnosis, medications, reportsAvailable },
-      media: { images: uploadedImages, audio: uploadedAudio, video: uploadedVideo },
-    })
-    setSubmitted(true)
-  }
+      media: {
+        images: uploadedImages,
+        audio: uploadedAudio,
+        video: uploadedVideo,
+      },
+    });
+    setSubmitted(true);
+  };
 
   // File upload handler (simulated)
   const handleFileUpload = (type: "image" | "audio" | "video") => {
-    const mockFile = `${type}-${Date.now()}.${type === "image" ? "jpg" : type === "audio" ? "mp3" : "mp4"}`
+    const mockFile = `${type}-${Date.now()}.${
+      type === "image" ? "jpg" : type === "audio" ? "mp3" : "mp4"
+    }`;
     if (type === "image") {
-      setUploadedImages([...uploadedImages, mockFile])
+      setUploadedImages([...uploadedImages, mockFile]);
     } else if (type === "audio") {
-      setUploadedAudio([...uploadedAudio, mockFile])
+      setUploadedAudio([...uploadedAudio, mockFile]);
     } else {
-      setUploadedVideo([...uploadedVideo, mockFile])
+      setUploadedVideo([...uploadedVideo, mockFile]);
     }
-  }
+  };
 
   if (submitted) {
     return (
@@ -102,14 +118,17 @@ export default function ConsultationPage() {
             <Card className="text-center">
               <CardContent className="pt-12 pb-12">
                 <CheckCircle2 className="w-20 h-20 text-green-600 mx-auto mb-6" />
-                <h1 className="text-3xl font-bold mb-4">Consultation Submitted Successfully!</h1>
+                <h1 className="text-3xl font-bold mb-4">
+                  Consultation Submitted Successfully!
+                </h1>
                 <p className="text-muted-foreground mb-8">
-                  Thank you for submitting your consultation. Our expert doctors will review your information and
-                  prepare a personalized treatment plan.
+                  Thank you for submitting your consultation. Our expert doctors
+                  will review your information and prepare a personalized
+                  treatment plan.
                 </p>
                 <p className="text-sm text-muted-foreground mb-8">
-                  You'll receive your prescription and treatment plan within 24-48 hours via your patient dashboard and
-                  WhatsApp.
+                  You'll receive your prescription and treatment plan within
+                  24-48 hours via your patient dashboard and WhatsApp.
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button variant="outline" onClick={() => router.push("/")}>
@@ -128,7 +147,7 @@ export default function ConsultationPage() {
         </main>
         <Footer />
       </div>
-    )
+    );
   }
 
   return (
@@ -140,8 +159,12 @@ export default function ConsultationPage() {
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-muted-foreground">Step {step} of 4</span>
-              <span className="text-sm font-medium text-muted-foreground">{Math.round(progress)}%</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Step {step} of 4
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {Math.round(progress)}%
+              </span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>
@@ -158,7 +181,8 @@ export default function ConsultationPage() {
                 {step === 1 && "Tell us about your basic health information"}
                 {step === 2 && "Select all symptoms you're experiencing"}
                 {step === 3 && "Share your medical history with us"}
-                {step === 4 && "Upload any relevant medical reports or documents"}
+                {step === 4 &&
+                  "Upload any relevant medical reports or documents"}
               </CardDescription>
             </CardHeader>
 
@@ -206,23 +230,37 @@ export default function ConsultationPage() {
                     <Label>Menstrual Cycle Regularity *</Label>
                     <RadioGroup
                       value={menstrualCycle}
-                      onValueChange={(v) => setMenstrualCycle(v as typeof menstrualCycle)}
+                      onValueChange={(v) =>
+                        setMenstrualCycle(v as typeof menstrualCycle)
+                      }
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="regular" id="regular" />
-                        <Label htmlFor="regular" className="font-normal cursor-pointer">
+                        <Label
+                          htmlFor="regular"
+                          className="font-normal cursor-pointer"
+                        >
                           Regular (cycle within 21-35 days)
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="irregular" id="irregular" />
-                        <Label htmlFor="irregular" className="font-normal cursor-pointer">
+                        <Label
+                          htmlFor="irregular"
+                          className="font-normal cursor-pointer"
+                        >
                           Irregular (varies by a few days)
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="very-irregular" id="very-irregular" />
-                        <Label htmlFor="very-irregular" className="font-normal cursor-pointer">
+                        <RadioGroupItem
+                          value="very-irregular"
+                          id="very-irregular"
+                        />
+                        <Label
+                          htmlFor="very-irregular"
+                          className="font-normal cursor-pointer"
+                        >
                           Very Irregular (unpredictable or absent)
                         </Label>
                       </div>
@@ -239,15 +277,29 @@ export default function ConsultationPage() {
                       <Checkbox
                         id="irregular-periods"
                         checked={irregularPeriods}
-                        onCheckedChange={(checked) => setIrregularPeriods(checked as boolean)}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setIrregularPeriods(checked as boolean)
+                        }
                       />
-                      <Label htmlFor="irregular-periods" className="font-normal cursor-pointer">
+                      <Label
+                        htmlFor="irregular-periods"
+                        className="font-normal cursor-pointer"
+                      >
                         Irregular or missed periods
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="acne" checked={acne} onCheckedChange={(checked) => setAcne(checked as boolean)} />
-                      <Label htmlFor="acne" className="font-normal cursor-pointer">
+                      <Checkbox
+                        id="acne"
+                        checked={acne}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setAcne(checked as boolean)
+                        }
+                      />
+                      <Label
+                        htmlFor="acne"
+                        className="font-normal cursor-pointer"
+                      >
                         Acne
                       </Label>
                     </div>
@@ -255,9 +307,14 @@ export default function ConsultationPage() {
                       <Checkbox
                         id="weight-gain"
                         checked={weightGain}
-                        onCheckedChange={(checked) => setWeightGain(checked as boolean)}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setWeightGain(checked as boolean)
+                        }
                       />
-                      <Label htmlFor="weight-gain" className="font-normal cursor-pointer">
+                      <Label
+                        htmlFor="weight-gain"
+                        className="font-normal cursor-pointer"
+                      >
                         Weight gain
                       </Label>
                     </div>
@@ -265,9 +322,14 @@ export default function ConsultationPage() {
                       <Checkbox
                         id="hair-loss"
                         checked={hairLoss}
-                        onCheckedChange={(checked) => setHairLoss(checked as boolean)}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setHairLoss(checked as boolean)
+                        }
                       />
-                      <Label htmlFor="hair-loss" className="font-normal cursor-pointer">
+                      <Label
+                        htmlFor="hair-loss"
+                        className="font-normal cursor-pointer"
+                      >
                         Hair loss (scalp)
                       </Label>
                     </div>
@@ -275,9 +337,14 @@ export default function ConsultationPage() {
                       <Checkbox
                         id="facial-hair"
                         checked={facialHair}
-                        onCheckedChange={(checked) => setFacialHair(checked as boolean)}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setFacialHair(checked as boolean)
+                        }
                       />
-                      <Label htmlFor="facial-hair" className="font-normal cursor-pointer">
+                      <Label
+                        htmlFor="facial-hair"
+                        className="font-normal cursor-pointer"
+                      >
                         Facial hair growth
                       </Label>
                     </div>
@@ -285,9 +352,14 @@ export default function ConsultationPage() {
                       <Checkbox
                         id="mood-changes"
                         checked={moodChanges}
-                        onCheckedChange={(checked) => setMoodChanges(checked as boolean)}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setMoodChanges(checked as boolean)
+                        }
                       />
-                      <Label htmlFor="mood-changes" className="font-normal cursor-pointer">
+                      <Label
+                        htmlFor="mood-changes"
+                        className="font-normal cursor-pointer"
+                      >
                         Mood changes or anxiety
                       </Label>
                     </div>
@@ -295,9 +367,14 @@ export default function ConsultationPage() {
                       <Checkbox
                         id="fatigue"
                         checked={fatigue}
-                        onCheckedChange={(checked) => setFatigue(checked as boolean)}
+                        onCheckedChange={(checked: boolean | string) =>
+                          setFatigue(checked as boolean)
+                        }
                       />
-                      <Label htmlFor="fatigue" className="font-normal cursor-pointer">
+                      <Label
+                        htmlFor="fatigue"
+                        className="font-normal cursor-pointer"
+                      >
                         Fatigue or low energy
                       </Label>
                     </div>
@@ -321,22 +398,37 @@ export default function ConsultationPage() {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <Label>Previous Diagnosis</Label>
-                    <RadioGroup value={diagnosis} onValueChange={(v) => setDiagnosis(v as typeof diagnosis)}>
+                    <RadioGroup
+                      value={diagnosis}
+                      onValueChange={(v) => setDiagnosis(v as typeof diagnosis)}
+                    >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="pcod" id="pcod" />
-                        <Label htmlFor="pcod" className="font-normal cursor-pointer">
+                        <Label
+                          htmlFor="pcod"
+                          className="font-normal cursor-pointer"
+                        >
                           PCOD (Polycystic Ovarian Disease)
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="pcos" id="pcos" />
-                        <Label htmlFor="pcos" className="font-normal cursor-pointer">
+                        <Label
+                          htmlFor="pcos"
+                          className="font-normal cursor-pointer"
+                        >
                           PCOS (Polycystic Ovary Syndrome)
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="not-diagnosed" id="not-diagnosed" />
-                        <Label htmlFor="not-diagnosed" className="font-normal cursor-pointer">
+                        <RadioGroupItem
+                          value="not-diagnosed"
+                          id="not-diagnosed"
+                        />
+                        <Label
+                          htmlFor="not-diagnosed"
+                          className="font-normal cursor-pointer"
+                        >
                           Not diagnosed yet
                         </Label>
                       </div>
@@ -358,17 +450,25 @@ export default function ConsultationPage() {
                     <Label>Do you have medical reports available?</Label>
                     <RadioGroup
                       value={reportsAvailable}
-                      onValueChange={(v) => setReportsAvailable(v as typeof reportsAvailable)}
+                      onValueChange={(v) =>
+                        setReportsAvailable(v as typeof reportsAvailable)
+                      }
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="yes" id="yes" />
-                        <Label htmlFor="yes" className="font-normal cursor-pointer">
+                        <Label
+                          htmlFor="yes"
+                          className="font-normal cursor-pointer"
+                        >
                           Yes
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="no" id="no" />
-                        <Label htmlFor="no" className="font-normal cursor-pointer">
+                        <Label
+                          htmlFor="no"
+                          className="font-normal cursor-pointer"
+                        >
                           No
                         </Label>
                       </div>
@@ -380,65 +480,102 @@ export default function ConsultationPage() {
               {/* Step 4: Upload Reports */}
               {step === 4 && (
                 <div className="space-y-6">
-                  {/* Image Upload */}
-                  <div className="space-y-2">
-                    <Label>Upload Images (Reports, Scans)</Label>
-                    <div
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors"
-                      onClick={() => handleFileUpload("image")}
-                    >
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-2">Click to upload images</p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG, PDF up to 10MB</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Image Upload */}
+                    <div>
+                      <Label className="block mb-2 h-10 flex items-center">
+                        Upload Images (Reports, Scans)
+                      </Label>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors h-[240px] flex flex-col items-center justify-center"
+                        onClick={() => handleFileUpload("image")}
+                      >
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Click to upload images
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, PDF up to 10MB
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Audio Upload */}
+                    <div>
+                      <Label className="block mb-2 h-10 flex items-center">
+                        Upload Audio (Voice Explanation)
+                      </Label>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors h-[240px] flex flex-col items-center justify-center"
+                        onClick={() => handleFileUpload("audio")}
+                      >
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Click to upload audio
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          MP3, WAV up to 25MB
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Video Upload */}
+                    <div>
+                      <Label className="block mb-2 h-10 flex items-center">
+                        Upload Video (Optional)
+                      </Label>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors h-[240px] flex flex-col items-center justify-center"
+                        onClick={() => handleFileUpload("video")}
+                      >
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Click to upload video
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          MP4, MOV up to 100MB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Image Files List */}
                     {uploadedImages.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="space-y-1">
                         {uploadedImages.map((file, idx) => (
-                          <div key={idx} className="text-sm text-muted-foreground">
+                          <div
+                            key={idx}
+                            className="text-sm text-muted-foreground"
+                          >
                             ✓ {file}
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>
 
-                  {/* Audio Upload */}
-                  <div className="space-y-2">
-                    <Label>Upload Audio (Voice Explanation)</Label>
-                    <div
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors"
-                      onClick={() => handleFileUpload("audio")}
-                    >
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-2">Click to upload audio</p>
-                      <p className="text-xs text-muted-foreground">MP3, WAV up to 25MB</p>
-                    </div>
+                    {/* Audio Files List */}
                     {uploadedAudio.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="space-y-1">
                         {uploadedAudio.map((file, idx) => (
-                          <div key={idx} className="text-sm text-muted-foreground">
+                          <div
+                            key={idx}
+                            className="text-sm text-muted-foreground"
+                          >
                             ✓ {file}
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>
 
-                  {/* Video Upload */}
-                  <div className="space-y-2">
-                    <Label>Upload Video (Optional)</Label>
-                    <div
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors"
-                      onClick={() => handleFileUpload("video")}
-                    >
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-2">Click to upload video</p>
-                      <p className="text-xs text-muted-foreground">MP4, MOV up to 100MB</p>
-                    </div>
+                    {/* Video Files List */}
                     {uploadedVideo.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="space-y-1">
                         {uploadedVideo.map((file, idx) => (
-                          <div key={idx} className="text-sm text-muted-foreground">
+                          <div
+                            key={idx}
+                            className="text-sm text-muted-foreground"
+                          >
                             ✓ {file}
                           </div>
                         ))}
@@ -448,8 +585,9 @@ export default function ConsultationPage() {
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
-                      <strong>Language Support:</strong> You can submit your consultation in any language. Our system
-                      will automatically translate it for the doctor.
+                      <strong>Language Support:</strong> You can submit your
+                      consultation in any language. Our system will
+                      automatically translate it for the doctor.
                     </p>
                   </div>
                 </div>
@@ -485,5 +623,5 @@ export default function ConsultationPage() {
 
       <Footer />
     </div>
-  )
+  );
 }

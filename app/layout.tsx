@@ -1,11 +1,12 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
+import type React from "react";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { UserProvider } from "@/lib/user-context";
+import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Healova - Expert PCOD/PCOS Care That Actually Works",
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://healova.com",
+    url: "https://healova.co",
     title: "Healova - Expert PCOD/PCOS Care That Actually Works",
     description:
       "Get personalized PCOD/PCOS treatment from board-certified doctors. Trusted by 10,000+ women. Start your healing journey today.",
@@ -38,7 +39,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Healova - Expert PCOD/PCOS Care",
-    description: "Personalized PCOD/PCOS treatment from expert doctors. Trusted by 10,000+ women.",
+    description:
+      "Personalized PCOD/PCOS treatment from expert doctors. Trusted by 10,000+ women.",
   },
   robots: {
     index: true,
@@ -69,19 +71,19 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        {children}
+        <UserProvider>{children}</UserProvider>
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
