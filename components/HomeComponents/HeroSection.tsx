@@ -72,12 +72,12 @@ export function HeroSection() {
           </Button>
         </div>
 
-        <div className="absolute bottom-12 left-2/3  flex flex-col items-center gap-2 animate-bounce">
+        {/* <div className="absolute bottom-12 left-2/3  flex flex-col items-center gap-2 animate-bounce">
           <span className="text-white/70 text-sm font-medium uppercase tracking-wider">
             Scroll to Explore
           </span>
           <ArrowDown className="w-5 h-5 text-white/70" />
-        </div>
+        </div> */}
       </div>
     </section>
   );
