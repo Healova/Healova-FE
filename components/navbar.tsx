@@ -1,11 +1,12 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useState, useEffect } from "react"
-import { User, Menu, X } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect, useMemo, useTransition } from "react";
+import { User, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,60 +14,82 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { getCurrentUser } from "@/lib/auth"
-import type { User as UserType } from "@/lib/types"
+} from "@/components/ui/dropdown-menu";
+import { useUser } from "@/lib/user-context";
 
 export function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [currentUser, setCurrentUser] = useState<UserType | null>(null)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { currentUser } = useUser();
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
+  const [isScrolled, setIsScrolled] = useState(!isHomePage);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Update isScrolled when changing pages
+    if (!isHomePage) {
+      setIsScrolled(true);
+    } else if (isHomePage && mounted) {
+      setIsScrolled(window.scrollY > 20);
+    }
+  }, [isHomePage, mounted]);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+      if (isHomePage) {
+        setIsScrolled(window.scrollY > 20);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHomePage]);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getCurrentUser()
-      setCurrentUser(user)
-    }
-    fetchUser()
-  }, [])
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false)
-  }, [])
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   const handleSignOut = async () => {
-    const { signOut } = await import("@/lib/auth")
-    await signOut()
-    window.location.href = "/"
-  }
+    const { signOut } = await import("@/lib/auth");
+    await signOut();
+    window.location.href = "/";
+  };
 
   const handleConsultationClick = (e: React.MouseEvent, isMobile = false) => {
     if (!currentUser) {
-      e.preventDefault()
+      e.preventDefault();
       if (isMobile) {
-        setIsMobileMenuOpen(false)
+        setIsMobileMenuOpen(false);
       }
-      window.location.href = "/sign-in"
+      window.location.href = "/sign-in";
     } else {
       if (isMobile) {
-        setIsMobileMenuOpen(false)
+        setIsMobileMenuOpen(false);
       }
     }
-  }
+  };
+
+  const isActive = useMemo(
+    () => (href: string) => {
+      if (!mounted) return false;
+      return pathname === href;
+    },
+    [pathname, mounted]
+  );
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${
+      className={`fixed top-0 left-0 right-0 z-50 ${
         isScrolled ? "bg-white/95 backdrop-blur-md shadow-sm" : "bg-transparent"
       }`}
+      style={{
+        contain: "layout",
+        transition:
+          "background-color 500ms ease-in-out, box-shadow 500ms ease-in-out",
+      }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -75,7 +98,9 @@ export function Navbar() {
             <Link href="/" className="flex items-center">
               <span
                 className={`text-2xl font-bold transition-colors duration-500 ${
-                  isScrolled ? "bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent" : "text-white"
+                  isScrolled
+                    ? "bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent"
+                    : "text-white"
                 }`}
               >
                 HEALOVA
@@ -86,91 +111,145 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="/"
-              className={`text-sm font-medium transition-colors duration-300 relative group ${
+              className={`text-sm font-medium transition-colors duration-300 relative group whitespace-nowrap ${
                 isScrolled ? "text-gray-700" : "text-white"
               }`}
             >
               Home
-              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-pink-600 transition-all duration-300 group-hover:w-full"></span>
+              <span
+                className={`absolute left-0 bottom-0 h-0.5 bg-pink-600 transition-all duration-300 ${
+                  mounted && isActive("/") ? "w-full" : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
             <Link
               href="/about"
-              className={`text-sm font-medium transition-colors duration-300 relative group ${
+              className={`text-sm font-medium transition-colors duration-300 relative group whitespace-nowrap ${
                 isScrolled ? "text-gray-700" : "text-white"
               }`}
             >
               About
-              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-pink-600 transition-all duration-300 group-hover:w-full"></span>
+              <span
+                className={`absolute left-0 bottom-0 h-0.5 bg-pink-600 transition-all duration-300 ${
+                  mounted && isActive("/about")
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
             <Link
-              href="#"
-              className={`text-sm font-medium transition-colors duration-300 relative group ${
+              href="/testimonials"
+              className={`text-sm font-medium transition-colors duration-300 relative group whitespace-nowrap ${
                 isScrolled ? "text-gray-700" : "text-white"
               }`}
             >
               Testimonials
-              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-pink-600 transition-all duration-300 group-hover:w-full"></span>
+              <span
+                className={`absolute left-0 bottom-0 h-0.5 bg-pink-600 transition-all duration-300 ${
+                  mounted && isActive("/testimonials")
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
-            <Link
+            {/* <Link
               href="/pricing"
-              className={`text-sm font-medium transition-colors duration-300 relative group ${
+              className={`text-sm font-medium transition-colors duration-300 relative group whitespace-nowrap ${
                 isScrolled ? "text-gray-700" : "text-white"
               }`}
             >
               Pricing
-              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-pink-600 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
+              <span
+                className={`absolute left-0 bottom-0 h-0.5 bg-pink-600 transition-all duration-300 ${
+                  mounted && isActive("/pricing")
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
+                }`}
+              ></span>
+            </Link> */}
             <Link
               href="/faq"
-              className={`text-sm font-medium transition-colors duration-300 relative group ${
+              className={`text-sm font-medium transition-colors duration-300 relative group whitespace-nowrap ${
                 isScrolled ? "text-gray-700" : "text-white"
               }`}
             >
               FAQ
-              <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-pink-600 transition-all duration-300 group-hover:w-full"></span>
+              <span
+                className={`absolute left-0 bottom-0 h-0.5 bg-pink-600 transition-all duration-300 ${
+                  mounted && isActive("/faq")
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
+            <Button
+              asChild
+              size="sm"
+              className="rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+              onClick={(e) => handleConsultationClick(e)}
+            >
+              <Link href="/consultation">Consultation</Link>
+            </Button>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Right: Auth buttons or User menu */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3 w-32 justify-end">
               {currentUser ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full w-10 h-10 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
-                    >
-                      <User className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{currentUser.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">{currentUser.email}</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile">Profile</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={currentUser.role === "doctor" ? "/dashboard/doctor" : "/dashboard/patient"}>
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>Sign Out</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="w-10 flex-shrink-0">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full w-10 h-10 flex-shrink-0 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+                      >
+                        <User className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {currentUser.name}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            {currentUser.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile">Profile</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={
+                            currentUser.role === "doctor"
+                              ? "/dashboard/doctor"
+                              : "/dashboard/patient"
+                          }
+                        >
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
                 <>
                   <Button
                     variant="ghost"
                     asChild
-                    className={isScrolled ? "text-gray-700 hover:text-pink-600" : "text-white hover:text-pink-400"}
+                    className={
+                      isScrolled
+                        ? "text-gray-700 hover:text-pink-600"
+                        : "text-white hover:text-pink-400"
+                    }
                   >
                     <Link href="/sign-in">Sign In</Link>
                   </Button>
@@ -191,10 +270,16 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className={`md:hidden ${isScrolled ? "text-gray-700" : "text-white"}`}
+              className={`md:hidden ${
+                isScrolled ? "text-gray-700" : "text-white"
+              }`}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </Button>
           </div>
         </div>
@@ -217,7 +302,7 @@ export function Navbar() {
                 About
               </Link>
               <Link
-                href="#"
+                href="/testimonials"
                 className="px-4 py-2 text-sm font-medium transition-colors hover:text-pink-600 hover:bg-pink-50 rounded-lg"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -237,13 +322,23 @@ export function Navbar() {
               >
                 FAQ
               </Link>
+              <Button
+                asChild
+                size="sm"
+                className="w-full rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white mx-4 my-2"
+                onClick={(e) => handleConsultationClick(e, true)}
+              >
+                <Link href="/consultation">Consultation</Link>
+              </Button>
 
               <div className="pt-3 border-t border-gray-200">
                 {currentUser ? (
                   <div className="space-y-2">
                     <div className="px-4 py-2">
                       <p className="text-sm font-medium">{currentUser.name}</p>
-                      <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {currentUser.email}
+                      </p>
                     </div>
                     <Link
                       href="/profile"
@@ -253,7 +348,11 @@ export function Navbar() {
                       Profile
                     </Link>
                     <Link
-                      href={currentUser.role === "doctor" ? "/dashboard/doctor" : "/dashboard/patient"}
+                      href={
+                        currentUser.role === "doctor"
+                          ? "/dashboard/doctor"
+                          : "/dashboard/patient"
+                      }
                       className="block px-4 py-2 text-sm font-medium transition-colors hover:text-pink-600 hover:bg-pink-50 rounded-lg"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -261,8 +360,8 @@ export function Navbar() {
                     </Link>
                     <button
                       onClick={() => {
-                        handleSignOut()
-                        setIsMobileMenuOpen(false)
+                        handleSignOut();
+                        setIsMobileMenuOpen(false);
                       }}
                       className="w-full text-left px-4 py-2 text-sm font-medium transition-colors hover:text-pink-600 hover:bg-pink-50 rounded-lg"
                     >
@@ -271,8 +370,15 @@ export function Navbar() {
                   </div>
                 ) : (
                   <div className="space-y-2 px-4">
-                    <Button variant="outline" className="w-full bg-transparent" asChild>
-                      <Link href="/sign-in" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      variant="outline"
+                      className="w-full bg-transparent"
+                      asChild
+                    >
+                      <Link
+                        href="/sign-in"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         Sign In
                       </Link>
                     </Button>
@@ -280,7 +386,10 @@ export function Navbar() {
                       className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
                       asChild
                     >
-                      <Link href="/sign-up" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link
+                        href="/sign-up"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         Sign Up
                       </Link>
                     </Button>
@@ -292,5 +401,5 @@ export function Navbar() {
         )}
       </div>
     </nav>
-  )
+  );
 }
