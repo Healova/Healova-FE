@@ -17,8 +17,8 @@ import {
   getConsultationsByPatientId,
   getPrescriptionByConsultationId,
   getPrescriptionsByPatientId,
-  type User,
-} from "@/lib/mock-data";
+} from "@/lib/utils/helpers";
+import { User } from "@/lib/types";
 import { signOut } from "@/lib/auth";
 import {
   LogOut,

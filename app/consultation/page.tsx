@@ -1,14 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -17,97 +12,189 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, CheckCircle2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-type Step = 1 | 2 | 3 | 4;
+import {
+  StepBasicDetails,
+  StepSymptoms,
+  StepMedicalHistory,
+  StepMediaUpload,
+} from "@/components/consultationComponents";
+import {
+  ConsultationStep,
+  ConsultationFormData,
+  BasicDetails,
+  Symptoms,
+  MedicalHistory,
+  MediaFile,
+} from "@/lib/types";
 
 export default function ConsultationPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<ConsultationStep>(1);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string>("");
 
   // Form state
-  const [age, setAge] = useState("");
-  const [height, setHeight] = useState("");
-  const [weight, setWeight] = useState("");
-  const [menstrualCycle, setMenstrualCycle] = useState<
-    "regular" | "irregular" | "very-irregular"
-  >("regular");
-
-  // Symptoms
-  const [irregularPeriods, setIrregularPeriods] = useState(false);
-  const [acne, setAcne] = useState(false);
-  const [weightGain, setWeightGain] = useState(false);
-  const [hairLoss, setHairLoss] = useState(false);
-  const [facialHair, setFacialHair] = useState(false);
-  const [moodChanges, setMoodChanges] = useState(false);
-  const [fatigue, setFatigue] = useState(false);
-  const [otherSymptoms, setOtherSymptoms] = useState("");
-
-  // Medical History
-  const [diagnosis, setDiagnosis] = useState<"pcod" | "pcos" | "not-diagnosed">(
-    "not-diagnosed"
-  );
-  const [medications, setMedications] = useState("");
-  const [reportsAvailable, setReportsAvailable] = useState<"yes" | "no">("no");
-
-  // Media uploads (simulated)
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [uploadedAudio, setUploadedAudio] = useState<string[]>([]);
-  const [uploadedVideo, setUploadedVideo] = useState<string[]>([]);
+  const [formData, setFormData] = useState<ConsultationFormData>({
+    basicDetails: {
+      age: 0,
+      height: 0,
+      weight: 0,
+      menstrualCycle: "regular",
+    },
+    symptoms: {
+      irregularPeriods: false,
+      acne: false,
+      weightGain: false,
+      hairLoss: false,
+      facialHair: false,
+      moodChanges: false,
+      fatigue: false,
+      other: "",
+    },
+    medicalHistory: {
+      diagnosis: "not-diagnosed",
+      medications: "",
+      reportsAvailable: "no",
+    },
+    media: [],
+  });
 
   const progress = (step / 4) * 100;
 
   const handleNext = () => {
+    // Clear previous errors
+    setError("");
+
+    // Validate step 1: Basic Details
+    if (step === 1) {
+      if (
+        !formData.basicDetails.age ||
+        !formData.basicDetails.height ||
+        !formData.basicDetails.weight
+      ) {
+        setError("Please fill in all basic details: Age, Height, and Weight");
+        return;
+      }
+    }
+
     if (step < 4) {
-      setStep((step + 1) as Step);
+      setStep((step + 1) as ConsultationStep);
     }
   };
 
   const handleBack = () => {
     if (step > 1) {
-      setStep((step - 1) as Step);
+      setStep((step - 1) as ConsultationStep);
     }
   };
 
-  const handleSubmit = () => {
-    // In a real app, this would submit to an API
-    console.log("[v0] Submitting consultation", {
-      basicDetails: { age, height, weight, menstrualCycle },
-      symptoms: {
-        irregularPeriods,
-        acne,
-        weightGain,
-        hairLoss,
-        facialHair,
-        moodChanges,
-        fatigue,
-        other: otherSymptoms,
-      },
-      medicalHistory: { diagnosis, medications, reportsAvailable },
-      media: {
-        images: uploadedImages,
-        audio: uploadedAudio,
-        video: uploadedVideo,
-      },
-    });
-    setSubmitted(true);
+  const handleBasicDetailsChange = (data: BasicDetails) => {
+    setFormData((prev) => ({
+      ...prev,
+      basicDetails: data,
+    }));
   };
 
-  // File upload handler (simulated)
-  const handleFileUpload = (type: "image" | "audio" | "video") => {
-    const mockFile = `${type}-${Date.now()}.${
-      type === "image" ? "jpg" : type === "audio" ? "mp3" : "mp4"
-    }`;
-    if (type === "image") {
-      setUploadedImages([...uploadedImages, mockFile]);
-    } else if (type === "audio") {
-      setUploadedAudio([...uploadedAudio, mockFile]);
-    } else {
-      setUploadedVideo([...uploadedVideo, mockFile]);
+  const handleSymptomsChange = (data: Symptoms) => {
+    setFormData((prev) => ({
+      ...prev,
+      symptoms: data,
+    }));
+  };
+
+  const handleMedicalHistoryChange = (data: MedicalHistory) => {
+    setFormData((prev) => ({
+      ...prev,
+      medicalHistory: data,
+    }));
+  };
+
+  const handleMediaChange = (files: MediaFile[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      media: files,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // Validation
+      if (
+        !formData.basicDetails.age ||
+        !formData.basicDetails.height ||
+        !formData.basicDetails.weight
+      ) {
+        alert("Please fill in all basic details (Age, Height, Weight)");
+        return;
+      }
+
+      // Prepare data for backend
+      const submitData = {
+        basicDetails: {
+          age: formData.basicDetails.age,
+          height: formData.basicDetails.height,
+          weight: formData.basicDetails.weight,
+          menstrualCycleRegularity: formData.basicDetails.menstrualCycle,
+        },
+        symptoms: {
+          irregularPeriods: formData.symptoms.irregularPeriods,
+          acne: formData.symptoms.acne,
+          weightGain: formData.symptoms.weightGain,
+          hairLoss: formData.symptoms.hairLoss,
+          facialHair: formData.symptoms.facialHair,
+          moodChanges: formData.symptoms.moodChanges,
+          fatigue: formData.symptoms.fatigue,
+          other: formData.symptoms.other || undefined,
+        },
+        medicalHistory: {
+          previousDiagnosis: formData.medicalHistory.diagnosis,
+          medications: formData.medicalHistory.medications || undefined,
+          reportsAvailable: formData.medicalHistory.reportsAvailable === "yes",
+        },
+        media: {
+          images: formData.media
+            .filter((m) => m.type === "image")
+            .map((m) => m.name),
+          audio: formData.media
+            .filter((m) => m.type === "audio")
+            .map((m) => m.name),
+          video: formData.media
+            .filter((m) => m.type === "video")
+            .map((m) => m.name),
+        },
+      };
+
+      // Log for now (replace with actual API call later)
+      console.log("Submitting consultation:", submitData);
+
+      // TODO: When backend is ready, uncomment this:
+      // const response = await fetch("/api/consultations", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(submitData),
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error("Failed to submit consultation");
+      // }
+
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Error submitting consultation:", error);
+      alert("Error submitting consultation. Please try again.");
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      formData.media.forEach((file) => URL.revokeObjectURL(file.url));
+    };
+  }, []);
 
   if (submitted) {
     return (
@@ -187,410 +274,44 @@ export default function ConsultationPage() {
             </CardHeader>
 
             <CardContent>
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
               {/* Step 1: Basic Details */}
               {step === 1 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="age">Age *</Label>
-                      <Input
-                        id="age"
-                        type="number"
-                        placeholder="28"
-                        value={age}
-                        onChange={(e) => setAge(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="height">Height (cm) *</Label>
-                      <Input
-                        id="height"
-                        type="number"
-                        placeholder="165"
-                        value={height}
-                        onChange={(e) => setHeight(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="weight">Weight (kg) *</Label>
-                      <Input
-                        id="weight"
-                        type="number"
-                        placeholder="70"
-                        value={weight}
-                        onChange={(e) => setWeight(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Menstrual Cycle Regularity *</Label>
-                    <RadioGroup
-                      value={menstrualCycle}
-                      onValueChange={(v) =>
-                        setMenstrualCycle(v as typeof menstrualCycle)
-                      }
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="regular" id="regular" />
-                        <Label
-                          htmlFor="regular"
-                          className="font-normal cursor-pointer"
-                        >
-                          Regular (cycle within 21-35 days)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="irregular" id="irregular" />
-                        <Label
-                          htmlFor="irregular"
-                          className="font-normal cursor-pointer"
-                        >
-                          Irregular (varies by a few days)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          value="very-irregular"
-                          id="very-irregular"
-                        />
-                        <Label
-                          htmlFor="very-irregular"
-                          className="font-normal cursor-pointer"
-                        >
-                          Very Irregular (unpredictable or absent)
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </div>
+                <StepBasicDetails
+                  data={formData.basicDetails}
+                  onChange={handleBasicDetailsChange}
+                />
               )}
 
               {/* Step 2: Symptoms */}
               {step === 2 && (
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="irregular-periods"
-                        checked={irregularPeriods}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setIrregularPeriods(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="irregular-periods"
-                        className="font-normal cursor-pointer"
-                      >
-                        Irregular or missed periods
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="acne"
-                        checked={acne}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setAcne(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="acne"
-                        className="font-normal cursor-pointer"
-                      >
-                        Acne
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="weight-gain"
-                        checked={weightGain}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setWeightGain(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="weight-gain"
-                        className="font-normal cursor-pointer"
-                      >
-                        Weight gain
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="hair-loss"
-                        checked={hairLoss}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setHairLoss(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="hair-loss"
-                        className="font-normal cursor-pointer"
-                      >
-                        Hair loss (scalp)
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="facial-hair"
-                        checked={facialHair}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setFacialHair(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="facial-hair"
-                        className="font-normal cursor-pointer"
-                      >
-                        Facial hair growth
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="mood-changes"
-                        checked={moodChanges}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setMoodChanges(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="mood-changes"
-                        className="font-normal cursor-pointer"
-                      >
-                        Mood changes or anxiety
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="fatigue"
-                        checked={fatigue}
-                        onCheckedChange={(checked: boolean | string) =>
-                          setFatigue(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="fatigue"
-                        className="font-normal cursor-pointer"
-                      >
-                        Fatigue or low energy
-                      </Label>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="other-symptoms">Other Symptoms</Label>
-                    <Textarea
-                      id="other-symptoms"
-                      placeholder="Describe any other symptoms you're experiencing..."
-                      value={otherSymptoms}
-                      onChange={(e) => setOtherSymptoms(e.target.value)}
-                      rows={4}
-                    />
-                  </div>
-                </div>
+                <StepSymptoms
+                  data={formData.symptoms}
+                  onChange={handleSymptomsChange}
+                />
               )}
 
               {/* Step 3: Medical History */}
               {step === 3 && (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Previous Diagnosis</Label>
-                    <RadioGroup
-                      value={diagnosis}
-                      onValueChange={(v) => setDiagnosis(v as typeof diagnosis)}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="pcod" id="pcod" />
-                        <Label
-                          htmlFor="pcod"
-                          className="font-normal cursor-pointer"
-                        >
-                          PCOD (Polycystic Ovarian Disease)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="pcos" id="pcos" />
-                        <Label
-                          htmlFor="pcos"
-                          className="font-normal cursor-pointer"
-                        >
-                          PCOS (Polycystic Ovary Syndrome)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          value="not-diagnosed"
-                          id="not-diagnosed"
-                        />
-                        <Label
-                          htmlFor="not-diagnosed"
-                          className="font-normal cursor-pointer"
-                        >
-                          Not diagnosed yet
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="medications">Current Medications</Label>
-                    <Textarea
-                      id="medications"
-                      placeholder="List any medications you're currently taking..."
-                      value={medications}
-                      onChange={(e) => setMedications(e.target.value)}
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Do you have medical reports available?</Label>
-                    <RadioGroup
-                      value={reportsAvailable}
-                      onValueChange={(v) =>
-                        setReportsAvailable(v as typeof reportsAvailable)
-                      }
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="yes" />
-                        <Label
-                          htmlFor="yes"
-                          className="font-normal cursor-pointer"
-                        >
-                          Yes
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="no" />
-                        <Label
-                          htmlFor="no"
-                          className="font-normal cursor-pointer"
-                        >
-                          No
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </div>
+                <StepMedicalHistory
+                  data={formData.medicalHistory}
+                  onChange={handleMedicalHistoryChange}
+                />
               )}
 
-              {/* Step 4: Upload Reports */}
+              {/* Step 4: Media Upload */}
               {step === 4 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Image Upload */}
-                    <div>
-                      <Label className="block mb-2 h-10 flex items-center">
-                        Upload Images (Reports, Scans)
-                      </Label>
-                      <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors h-[240px] flex flex-col items-center justify-center"
-                        onClick={() => handleFileUpload("image")}
-                      >
-                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Click to upload images
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG, PDF up to 10MB
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Audio Upload */}
-                    <div>
-                      <Label className="block mb-2 h-10 flex items-center">
-                        Upload Audio (Voice Explanation)
-                      </Label>
-                      <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors h-[240px] flex flex-col items-center justify-center"
-                        onClick={() => handleFileUpload("audio")}
-                      >
-                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Click to upload audio
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          MP3, WAV up to 25MB
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Video Upload */}
-                    <div>
-                      <Label className="block mb-2 h-10 flex items-center">
-                        Upload Video (Optional)
-                      </Label>
-                      <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-pink-500 transition-colors h-[240px] flex flex-col items-center justify-center"
-                        onClick={() => handleFileUpload("video")}
-                      >
-                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Click to upload video
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          MP4, MOV up to 100MB
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Image Files List */}
-                    {uploadedImages.length > 0 && (
-                      <div className="space-y-1">
-                        {uploadedImages.map((file, idx) => (
-                          <div
-                            key={idx}
-                            className="text-sm text-muted-foreground"
-                          >
-                            ✓ {file}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Audio Files List */}
-                    {uploadedAudio.length > 0 && (
-                      <div className="space-y-1">
-                        {uploadedAudio.map((file, idx) => (
-                          <div
-                            key={idx}
-                            className="text-sm text-muted-foreground"
-                          >
-                            ✓ {file}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Video Files List */}
-                    {uploadedVideo.length > 0 && (
-                      <div className="space-y-1">
-                        {uploadedVideo.map((file, idx) => (
-                          <div
-                            key={idx}
-                            className="text-sm text-muted-foreground"
-                          >
-                            ✓ {file}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800">
-                      <strong>Language Support:</strong> You can submit your
-                      consultation in any language. Our system will
-                      automatically translate it for the doctor.
-                    </p>
-                  </div>
-                </div>
+                <StepMediaUpload
+                  uploadedFiles={formData.media}
+                  onFilesChange={handleMediaChange}
+                />
               )}
 
               {/* Navigation Buttons */}
