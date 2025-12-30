@@ -15,14 +15,14 @@ interface AuthResponse {
 async function apiRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  
+
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...options.headers,
   };
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
   return fetch(`${API_URL}${endpoint}`, {
@@ -60,6 +60,7 @@ export async function signIn(
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge: 60 * 60 * 24 * 7, // 1 week
+          path: "/",
         });
       }
     }
@@ -94,6 +95,7 @@ export async function signUp(
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: "/",
       });
 
       if (result.token) {
@@ -103,6 +105,7 @@ export async function signUp(
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge: 60 * 60 * 24 * 7, // 1 week
+          path: "/",
         });
       }
     }

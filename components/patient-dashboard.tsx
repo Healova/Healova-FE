@@ -111,6 +111,10 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
     }
   };
 
+  const getPrescriptionByConsultationId = (consultationId: string) => {
+    return prescriptions.find((p) => p.consultationId === consultationId);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 via-white to-purple-50">
       {/* Header with Navigation */}
@@ -130,41 +134,37 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
             <div className="hidden md:flex items-center gap-8">
               <Link
                 href="/"
-                className={`text-sm font-medium transition-colors duration-300 ${
-                  pathname === "/"
+                className={`text-sm font-medium transition-colors duration-300 ${pathname === "/"
                     ? "text-pink-600"
                     : "text-gray-700 hover:text-pink-600"
-                }`}
+                  }`}
               >
                 Home
               </Link>
               <Link
                 href="/about"
-                className={`text-sm font-medium transition-colors duration-300 ${
-                  pathname === "/about"
+                className={`text-sm font-medium transition-colors duration-300 ${pathname === "/about"
                     ? "text-pink-600"
                     : "text-gray-700 hover:text-pink-600"
-                }`}
+                  }`}
               >
                 About
               </Link>
               <Link
                 href="/pricing"
-                className={`text-sm font-medium transition-colors duration-300 ${
-                  pathname === "/pricing"
+                className={`text-sm font-medium transition-colors duration-300 ${pathname === "/pricing"
                     ? "text-pink-600"
                     : "text-gray-700 hover:text-pink-600"
-                }`}
+                  }`}
               >
                 Pricing
               </Link>
               <Link
                 href="/faq"
-                className={`text-sm font-medium transition-colors duration-300 ${
-                  pathname === "/faq"
+                className={`text-sm font-medium transition-colors duration-300 ${pathname === "/faq"
                     ? "text-pink-600"
                     : "text-gray-700 hover:text-pink-600"
-                }`}
+                  }`}
               >
                 FAQ
               </Link>

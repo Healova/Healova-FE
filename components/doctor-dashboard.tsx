@@ -128,7 +128,9 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
           <Card>
             <CardHeader className="pb-3">
               <CardDescription>Total Patients</CardDescription>
-              <CardTitle className="text-3xl">{mockPatients.length}</CardTitle>
+              <CardTitle className="text-3xl">
+                {new Set(consultations.map((c) => c.patientId)).size}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card>
@@ -136,7 +138,7 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
               <CardDescription>Pending Reviews</CardDescription>
               <CardTitle className="text-3xl">
                 {
-                  mockConsultations.filter((c) => c.status === "in-review")
+                  consultations.filter((c) => c.status === "in-review")
                     .length
                 }
               </CardTitle>
@@ -147,7 +149,7 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
               <CardDescription>Completed</CardDescription>
               <CardTitle className="text-3xl">
                 {
-                  mockConsultations.filter((c) => c.status === "completed")
+                  consultations.filter((c) => c.status === "completed")
                     .length
                 }
               </CardTitle>
@@ -185,67 +187,68 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
                     symptoms.push("Weight gain");
                   if (consultation.symptoms?.hairLoss) symptoms.push("Hair loss");
 
-                return (
-                  <div
-                    key={consultation.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          Patient #{consultation.patientId.slice(-4)}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Age: {consultation.basicDetails?.age || "N/A"} | BMI:{" "}
-                          {consultation.basicDetails?.weight && consultation.basicDetails?.height
-                            ? (
+                  return (
+                    <div
+                      key={consultation.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            Patient #{consultation.patientId.slice(-4)}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Age: {consultation.basicDetails?.age || "N/A"} | BMI:{" "}
+                            {consultation.basicDetails?.weight && consultation.basicDetails?.height
+                              ? (
                                 consultation.basicDetails.weight /
                                 Math.pow(consultation.basicDetails.height / 100, 2)
                               ).toFixed(1)
-                            : "N/A"}
+                              : "N/A"}
+                          </p>
+                        </div>
+                        <Badge className={getStatusColor(consultation.status)}>
+                          <span className="flex items-center gap-1">
+                            {getStatusIcon(consultation.status)}
+                            {consultation.status}
+                          </span>
+                        </Badge>
+                      </div>
+
+                      <div className="mb-3">
+                        <p className="text-sm font-medium mb-1">Symptoms:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {symptoms.map((symptom, idx) => (
+                            <Badge
+                              key={idx}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {symptom}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Submitted: {consultation.createdAt instanceof Date
+                            ? consultation.createdAt.toLocaleDateString()
+                            : new Date(consultation.createdAt).toLocaleDateString()}
                         </p>
-                      </div>
-                      <Badge className={getStatusColor(consultation.status)}>
-                        <span className="flex items-center gap-1">
-                          {getStatusIcon(consultation.status)}
-                          {consultation.status}
-                        </span>
-                      </Badge>
-                    </div>
-
-                    <div className="mb-3">
-                      <p className="text-sm font-medium mb-1">Symptoms:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {symptoms.map((symptom, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="outline"
-                            className="text-xs"
+                        <Button size="sm" asChild>
+                          <Link
+                            href={`/dashboard/doctor/consultation/${consultation.id}`}
                           >
-                            {symptom}
-                          </Badge>
-                        ))}
+                            View Details
+                          </Link>
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">
-                        Submitted: {consultation.createdAt instanceof Date
-                          ? consultation.createdAt.toLocaleDateString()
-                          : new Date(consultation.createdAt).toLocaleDateString()}
-                      </p>
-                      <Button size="sm" asChild>
-                        <Link
-                          href={`/dashboard/doctor/consultation/${consultation.id}`}
-                        >
-                          View Details
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>

@@ -5,7 +5,9 @@ const getAuthToken = (): string | null => {
   if (typeof document === 'undefined') return null;
   const cookies = document.cookie.split(';');
   const tokenCookie = cookies.find(c => c.trim().startsWith('auth_token='));
-  return tokenCookie ? tokenCookie.split('=')[1] : null;
+  if (!tokenCookie) return null;
+  const parts = tokenCookie.split('=');
+  return parts.length > 1 ? parts.slice(1).join('=') : null;
 };
 
 // Helper function to set auth token in cookie
@@ -26,9 +28,9 @@ const apiRequest = async (
   options: RequestInit = {}
 ): Promise<Response> => {
   const token = getAuthToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   if (token) {
@@ -163,7 +165,7 @@ export const uploadAPI = {
     formData.append('file', file);
 
     const token = getAuthToken();
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -184,7 +186,7 @@ export const uploadAPI = {
     });
 
     const token = getAuthToken();
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

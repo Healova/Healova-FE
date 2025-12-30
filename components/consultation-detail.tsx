@@ -47,7 +47,7 @@ export function ConsultationDetail({ consultation, patient, doctorId }: Consulta
     }
 
     setGenerating(true)
-    
+
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
       const cookies = document.cookie.split(";")
@@ -59,7 +59,7 @@ export function ConsultationDetail({ consultation, patient, doctorId }: Consulta
       }
 
       const filteredMedicines = medicines.filter(m => m.name.trim())
-      
+
       const response = await fetch(`${API_URL}/prescriptions`, {
         method: "POST",
         headers: {
@@ -81,7 +81,7 @@ export function ConsultationDetail({ consultation, patient, doctorId }: Consulta
       }
 
       const result = await response.json()
-      
+
       if (result.success) {
         alert("Prescription created successfully! It will be sent to the patient via dashboard and WhatsApp.")
         // Optionally redirect or refresh
@@ -222,8 +222,21 @@ export function ConsultationDetail({ consultation, patient, doctorId }: Consulta
                       <p className="text-sm font-medium mb-2">Images</p>
                       <div className="grid grid-cols-2 gap-2">
                         {consultation.media.images.map((image, idx) => (
-                          <div key={idx} className="border rounded-lg p-2 text-sm">
-                            {image}
+                          <div key={idx} className="border rounded-lg p-2 overflow-hidden">
+                            <img
+                              src={image}
+                              alt={`Consultation image ${idx + 1}`}
+                              className="w-full h-auto object-cover rounded"
+                              loading="lazy"
+                            />
+                            <a
+                              href={image}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline mt-1 block truncate"
+                            >
+                              View Full Size
+                            </a>
                           </div>
                         ))}
                       </div>
@@ -232,11 +245,31 @@ export function ConsultationDetail({ consultation, patient, doctorId }: Consulta
                   {consultation.media.audio && consultation.media.audio.length > 0 && (
                     <div>
                       <p className="text-sm font-medium mb-2">Audio Files</p>
-                      {consultation.media.audio.map((audio, idx) => (
-                        <div key={idx} className="text-sm text-muted-foreground">
-                          {audio}
-                        </div>
-                      ))}
+                      <div className="space-y-2">
+                        {consultation.media.audio.map((audio, idx) => (
+                          <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                            <audio controls className="w-full">
+                              <source src={audio} />
+                              Your browser does not support the audio element.
+                            </audio>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {consultation.media.video && consultation.media.video.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Video Files</p>
+                      <div className="space-y-2">
+                        {consultation.media.video.map((video, idx) => (
+                          <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                            <video controls className="w-full rounded">
+                              <source src={video} />
+                              Your browser does not support the video element.
+                            </video>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>
