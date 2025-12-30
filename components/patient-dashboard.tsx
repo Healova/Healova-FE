@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  getConsultationsByPatientId,
-  getPrescriptionByConsultationId,
-  getPrescriptionsByPatientId,
-} from "@/lib/utils/helpers";
-import { User } from "@/lib/types";
+import { User, Consultation, Prescription } from "@/lib/types";
 import { signOut } from "@/lib/auth";
+import { consultationsAPI, prescriptionsAPI } from "@/lib/api";
 import {
   LogOut,
   Plus,
@@ -41,9 +37,61 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("consultations");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const consultations = getConsultationsByPatientId(user.id);
-  const prescriptions = getPrescriptionsByPatientId(user.id);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [consultationsData, prescriptionsData] = await Promise.all([
+          consultationsAPI.getByPatient(),
+          prescriptionsAPI.getByPatient(user.id),
+        ]);
+
+        // Transform data to match frontend types (convert date strings to Date objects)
+        const transformedConsultations = consultationsData.map((c: any) => ({
+          ...c,
+          id: c.id,
+          patientId: c.patient_id,
+          doctorId: c.doctor_id,
+          status: c.status,
+          createdAt: new Date(c.created_at),
+          updatedAt: new Date(c.updated_at),
+          basicDetails: c.basic_details,
+          symptoms: c.symptoms,
+          medicalHistory: {
+            previousDiagnosis: c.medical_history.previousDiagnosis || c.medical_history.previous_diagnosis,
+            medications: c.medical_history.medications,
+            reportsAvailable: c.medical_history.reportsAvailable || c.medical_history.reports_available,
+          },
+          media: c.media,
+          language: c.language,
+        }));
+
+        const transformedPrescriptions = prescriptionsData.map((p: any) => ({
+          ...p,
+          createdAt: new Date(p.created_at),
+          consultationId: p.consultation_id,
+          patientId: p.patient_id,
+          doctorId: p.doctor_id,
+          lifestyleRecommendations: p.lifestyle_recommendations,
+          followUpNotes: p.follow_up_notes,
+          pdfUrl: p.pdf_url,
+        }));
+
+        setConsultations(transformedConsultations);
+        setPrescriptions(transformedPrescriptions);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -234,7 +282,11 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {consultations.length === 0 ? (
+                {loading ? (
+                  <div className="text-center py-12">
+                    <p>Loading consultations...</p>
+                  </div>
+                ) : consultations.length === 0 ? (
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">
@@ -299,7 +351,9 @@ export function PatientDashboard({ user }: PatientDashboardProps) {
                                 Last Updated:
                               </span>
                               <span className="font-medium">
-                                {consultation.updatedAt.toLocaleDateString()}
+                                {consultation.updatedAt instanceof Date
+                                  ? consultation.updatedAt.toLocaleDateString()
+                                  : new Date(consultation.updatedAt).toLocaleDateString()}
                               </span>
                             </div>
                           </div>

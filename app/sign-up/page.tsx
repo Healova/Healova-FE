@@ -17,6 +17,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [phone, setPhone] = useState("")
   const [role, setRole] = useState<"patient" | "doctor">("patient")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -29,7 +30,7 @@ export default function SignUpPage() {
     console.log("[v0] Sign up attempt with email:", email, "role:", role)
 
     try {
-      const result = await signUp(email, password, name, role)
+      const result = await signUp(email, password, name, role, phone)
       console.log("[v0] Sign up result:", result)
 
       if (result.success) {
@@ -96,6 +97,21 @@ export default function SignUpPage() {
                 disabled={loading}
                 minLength={8}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1234567890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Used to send prescriptions via WhatsApp
+              </p>
             </div>
             <div className="space-y-2">
               <Label>I am a</Label>

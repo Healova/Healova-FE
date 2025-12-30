@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockConsultations, mockPatients, type User } from "@/lib/mock-data";
+import { User, Consultation } from "@/lib/types";
 import { signOut } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { consultationsAPI } from "@/lib/api";
 import { LogOut, FileText, Clock, CheckCircle } from "lucide-react";
 
 interface DoctorDashboardProps {
@@ -21,6 +23,45 @@ interface DoctorDashboardProps {
 
 export function DoctorDashboard({ user }: DoctorDashboardProps) {
   const router = useRouter();
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConsultations = async () => {
+      try {
+        setLoading(true);
+        const consultationsData = await consultationsAPI.getByDoctor();
+
+        // Transform data to match frontend types
+        const transformedConsultations = consultationsData.map((c: any) => ({
+          ...c,
+          id: c.id,
+          patientId: c.patient_id,
+          doctorId: c.doctor_id,
+          status: c.status,
+          createdAt: new Date(c.created_at),
+          updatedAt: new Date(c.updated_at),
+          basicDetails: c.basic_details,
+          symptoms: c.symptoms,
+          medicalHistory: {
+            previousDiagnosis: c.medical_history.previousDiagnosis || c.medical_history.previous_diagnosis,
+            medications: c.medical_history.medications,
+            reportsAvailable: c.medical_history.reportsAvailable || c.medical_history.reports_available,
+          },
+          media: c.media,
+          language: c.language,
+        }));
+
+        setConsultations(transformedConsultations);
+      } catch (error) {
+        console.error("Error fetching consultations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConsultations();
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -123,18 +164,26 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {mockConsultations.map((consultation) => {
-                const patient = mockPatients.find(
-                  (p) => p.id === consultation.patientId
-                );
-                const symptoms = [];
-                if (consultation.symptoms.irregularPeriods)
-                  symptoms.push("Irregular periods");
-                if (consultation.symptoms.acne) symptoms.push("Acne");
-                if (consultation.symptoms.weightGain)
-                  symptoms.push("Weight gain");
-                if (consultation.symptoms.hairLoss) symptoms.push("Hair loss");
+            {loading ? (
+              <div className="text-center py-12">
+                <p>Loading consultations...</p>
+              </div>
+            ) : consultations.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Consultations Yet</h3>
+                <p className="text-muted-foreground">No patient consultations available at the moment.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {consultations.map((consultation) => {
+                  const symptoms = [];
+                  if (consultation.symptoms?.irregularPeriods)
+                    symptoms.push("Irregular periods");
+                  if (consultation.symptoms?.acne) symptoms.push("Acne");
+                  if (consultation.symptoms?.weightGain)
+                    symptoms.push("Weight gain");
+                  if (consultation.symptoms?.hairLoss) symptoms.push("Hair loss");
 
                 return (
                   <div
@@ -144,14 +193,16 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="font-semibold text-lg">
-                          {patient?.name || "Unknown Patient"}
+                          Patient #{consultation.patientId.slice(-4)}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Age: {consultation.basicDetails.age} | BMI:{" "}
-                          {(
-                            consultation.basicDetails.weight /
-                            Math.pow(consultation.basicDetails.height / 100, 2)
-                          ).toFixed(1)}
+                          Age: {consultation.basicDetails?.age || "N/A"} | BMI:{" "}
+                          {consultation.basicDetails?.weight && consultation.basicDetails?.height
+                            ? (
+                                consultation.basicDetails.weight /
+                                Math.pow(consultation.basicDetails.height / 100, 2)
+                              ).toFixed(1)
+                            : "N/A"}
                         </p>
                       </div>
                       <Badge className={getStatusColor(consultation.status)}>
@@ -179,7 +230,9 @@ export function DoctorDashboard({ user }: DoctorDashboardProps) {
 
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
-                        Submitted: {consultation.createdAt.toLocaleDateString()}
+                        Submitted: {consultation.createdAt instanceof Date
+                          ? consultation.createdAt.toLocaleDateString()
+                          : new Date(consultation.createdAt).toLocaleDateString()}
                       </p>
                       <Button size="sm" asChild>
                         <Link

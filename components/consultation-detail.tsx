@@ -40,22 +40,59 @@ export function ConsultationDetail({ consultation, patient, doctorId }: Consulta
     setMedicines(updated)
   }
 
-  const handleGeneratePrescription = () => {
+  const handleGeneratePrescription = async () => {
+    if (!diagnosis.trim() || medicines.filter(m => m.name.trim()).length === 0 || !lifestyleRecommendations.trim() || !followUpNotes.trim()) {
+      alert("Please fill in all required fields: Diagnosis, at least one medicine, Lifestyle Recommendations, and Follow-up Notes")
+      return
+    }
+
     setGenerating(true)
-    // Simulate PDF generation
-    setTimeout(() => {
-      console.log("[v0] Prescription generated", {
-        consultationId: consultation.id,
-        patientId: consultation.patientId,
-        doctorId,
-        diagnosis,
-        medicines,
-        lifestyleRecommendations,
-        followUpNotes,
+    
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+      const cookies = document.cookie.split(";")
+      const tokenCookie = cookies.find((c) => c.trim().startsWith("auth_token="))
+      const token = tokenCookie ? tokenCookie.split("=")[1] : null
+
+      if (!token) {
+        throw new Error("You must be logged in to create a prescription")
+      }
+
+      const filteredMedicines = medicines.filter(m => m.name.trim())
+      
+      const response = await fetch(`${API_URL}/prescriptions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          consultationId: consultation.id,
+          diagnosis,
+          medicines: filteredMedicines,
+          lifestyleRecommendations,
+          followUpNotes,
+        }),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to create prescription")
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        alert("Prescription created successfully! It will be sent to the patient via dashboard and WhatsApp.")
+        // Optionally redirect or refresh
+        window.location.href = "/dashboard/doctor"
+      }
+    } catch (error: any) {
+      console.error("Error creating prescription:", error)
+      alert(error.message || "Failed to create prescription. Please try again.")
+    } finally {
       setGenerating(false)
-      alert("Prescription generated successfully! It will be sent to the patient via dashboard and WhatsApp.")
-    }, 1500)
+    }
   }
 
   const symptoms = []

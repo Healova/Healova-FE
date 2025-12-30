@@ -30,9 +30,12 @@ import {
   MedicalHistory,
   MediaFile,
 } from "@/lib/types";
+import { useUser } from "@/lib/user-context";
+import { consultationsAPI, uploadAPI } from "@/lib/api";
 
 export default function ConsultationPage() {
   const router = useRouter();
+  const { currentUser, isLoading } = useUser();
   const [step, setStep] = useState<ConsultationStep>(1);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string>("");
@@ -62,6 +65,24 @@ export default function ConsultationPage() {
     },
     media: [],
   });
+
+  // All hooks must be called before any conditional returns
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      formData.media.forEach((file) => URL.revokeObjectURL(file.url));
+    };
+  }, [formData.media]);
+
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
+      router.push("/sign-in");
+    }
+    if (!isLoading && currentUser && currentUser.role !== "patient") {
+      router.push("/dashboard/doctor");
+    }
+  }, [currentUser, isLoading, router]);
 
   const progress = (step / 4) * 100;
 
@@ -132,6 +153,43 @@ export default function ConsultationPage() {
         return;
       }
 
+      setError("");
+      setSubmitted(false);
+
+      // Check if user is authenticated
+      if (!currentUser || currentUser.role !== "patient") {
+        throw new Error("You must be logged in as a patient to submit a consultation");
+      }
+
+      const mediaUrls = {
+        images: [] as string[],
+        audio: [] as string[],
+        video: [] as string[],
+      };
+
+      if (formData.media.length > 0) {
+        // Upload each file using the API client
+        for (const mediaFile of formData.media) {
+          try {
+            const uploadData = await uploadAPI.uploadFile(mediaFile.file);
+            
+            if (uploadData.success) {
+              if (uploadData.type === "images") {
+                mediaUrls.images.push(uploadData.url);
+              } else if (uploadData.type === "audio") {
+                mediaUrls.audio.push(uploadData.url);
+              } else if (uploadData.type === "video") {
+                mediaUrls.video.push(uploadData.url);
+              }
+            } else {
+              throw new Error(uploadData.message || `Failed to upload ${mediaFile.name}`);
+            }
+          } catch (uploadError: any) {
+            throw new Error(`Failed to upload ${mediaFile.name}: ${uploadError.message}`);
+          }
+        }
+      }
+
       // Prepare data for backend
       const submitData = {
         basicDetails: {
@@ -155,46 +213,48 @@ export default function ConsultationPage() {
           medications: formData.medicalHistory.medications || undefined,
           reportsAvailable: formData.medicalHistory.reportsAvailable === "yes",
         },
-        media: {
-          images: formData.media
-            .filter((m) => m.type === "image")
-            .map((m) => m.name),
-          audio: formData.media
-            .filter((m) => m.type === "audio")
-            .map((m) => m.name),
-          video: formData.media
-            .filter((m) => m.type === "video")
-            .map((m) => m.name),
-        },
+        media: mediaUrls,
+        language: "English",
       };
 
-      // Log for now (replace with actual API call later)
-      console.log("Submitting consultation:", submitData);
-
-      // TODO: When backend is ready, uncomment this:
-      // const response = await fetch("/api/consultations", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(submitData),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error("Failed to submit consultation");
-      // }
+      // Submit consultation using the API client
+      const response = await consultationsAPI.create(submitData);
+      
+      if (!response.success) {
+        throw new Error(response.message || "Failed to submit consultation");
+      }
 
       setSubmitted(true);
-    } catch (error) {
+      // Redirect to dashboard after successful submission
+      setTimeout(() => {
+        router.push("/dashboard/patient");
+      }, 2000);
+    } catch (error: any) {
       console.error("Error submitting consultation:", error);
-      alert("Error submitting consultation. Please try again.");
+      setError(error.message || "Error submitting consultation. Please try again.");
+      alert(error.message || "Error submitting consultation. Please try again.");
     }
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      formData.media.forEach((file) => URL.revokeObjectURL(file.url));
-    };
-  }, []);
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 via-white to-purple-50">
+        <Navbar />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!currentUser || currentUser.role !== "patient") {
+    return null;
+  }
 
   if (submitted) {
     return (
